@@ -1,12 +1,14 @@
 ﻿using Microsoft.AspNetCore.WebUtilities;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Net;
 
 namespace PatronLibSharp{
     /// <summary>
     /// 
     /// </summary>
-    public class PatreonOAuth<E>{
+    public class PatreonOAuth{
         private string GRANT_TYPE_AUTHORIZATION;
         private string GRANT_TYPE_REFRESH;
 
@@ -48,16 +50,62 @@ namespace PatronLibSharp{
         }
 
         public TokensResponse GetTokens(string code){
+            Dictionary<string, string> parameters = new Dictionary<string, string>{
+                 { "grant_type", GRANT_TYPE_AUTHORIZATION},
+                { "code", "code"},
+                { "client_id", ClientID},
+                 { "client_secret", ClientSecret},
+                { "redirect_uri", RedirectUri}
+                };
 
+            string uri = "";
+            try{
+                uri = QueryHelpers.AddQueryString(PatreonAPI.BASE_URI + "/api/oauth2/token", parameters);
+                var x = Connect(uri);
+
+                return ToObject<TokensResponse>(x.ToString());
+            }
+            catch(Exception ex){
+                throw new Exception(ex.ToString());
+            } 
         }
 
-        public TokensResponse RefreshTokens(string RefreshToken)
-        {
+        public TokensResponse RefreshTokens(string RefreshToken){
+            Dictionary<string, string> parameters = new Dictionary<string, string>{
+                 { "grant_type", GRANT_TYPE_REFRESH},
+                { "client_id", ClientID},
+                 { "client_secret", ClientSecret},
+                { "redirect_uri", RedirectUri}
+                };
 
+            string uri = "";
+            try
+            {
+                uri = QueryHelpers.AddQueryString(PatreonAPI.BASE_URI + "/api/oauth2/token", parameters);
+                var x = Connect(uri);
+
+                return ToObject<TokensResponse>(x.ToString());
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.ToString());
+            }
         }
 
-        private E toObject(String str, Class<E> clazz){
-            return gson.fromJson(str, clazz);
+        private byte[] Connect(string URI){
+            WebClient web = new WebClient();
+           return web.DownloadData(URI);
+        }
+
+        /// <summary>
+        /// De-serialzie JSON to a specified Type
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        private T ToObject<T>(String str){
+            Type type = typeof(T);
+            return (T)JsonConvert.DeserializeObject(str,type);
         }
     }
 }

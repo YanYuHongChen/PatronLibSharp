@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
+﻿using AngleSharp;
+using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -93,8 +94,11 @@ namespace PatronLibSharp{
         }
 
         private byte[] Connect(string URI){
-            WebClient web = new WebClient();
-           return web.DownloadData(URI);
+            // Setup the configuration to support document loading
+            var config = Configuration.Default.WithDefaultLoader();
+            var address = URI;
+            // Asynchronously get the document in a new context using the configuration
+            var document =  BrowsingContext.New(config).OpenAsync(address);
         }
 
         /// <summary>
